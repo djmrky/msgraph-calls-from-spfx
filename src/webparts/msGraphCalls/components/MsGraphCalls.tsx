@@ -6,16 +6,14 @@ import { MSGraphClient } from '@microsoft/sp-http';
 import { IUsersResponse } from './IUsersReponse';
 import { IUser } from './IUser';
 
-import { DetailsList, DetailsListLayoutMode, Selection, SelectionMode, IColumn } from 'office-ui-fabric-react/lib/DetailsList';
+import { DetailsList, DetailsListLayoutMode, Selection, SelectionMode, IColumn, IObjectWithKey } from 'office-ui-fabric-react/lib/DetailsList';
+import { IMsGraphCallsState } from './IMsGraphCallsState';
 
-export default class MsGraphCalls extends React.Component<IMsGraphCallsProps, {}> {
-  state = {
-    items: []
-  }
-  public render(): React.ReactElement<IMsGraphCallsProps> {
-    if (this.state.items == null) {
-      return
-    }
+export default class MsGraphCalls extends React.Component<IMsGraphCallsProps, IMsGraphCallsState> {
+  private _selection: Selection;
+  public state: IMsGraphCallsState;
+  constructor(props: IMsGraphCallsProps) {
+    super(props);
 
     const columns: IColumn[] = [
       {
@@ -38,39 +36,63 @@ export default class MsGraphCalls extends React.Component<IMsGraphCallsProps, {}
       }
     ];
 
-    // const items: any[] = [
-    //   {
-    //     'displayName': 'Dusan',
-    //     'mail': "emajl",
-    //     'userPrincipalName': 'login name'
-    //   }
-    // ]
+    this._selection = new Selection({
+      onSelectionChanged: () => {
+        debugger;
+        this._setSelection()
+      }
+    });
+    this.state = {
+      columns: columns,
+      items: null,
+      selectedItems: null,
+      //selectionDetails: this._getSelectionDetails(),
+    };
+  }
+
+  private _setSelection(): void {
+    debugger;
+    const selectionCount = this._selection.getSelectedCount();
+
+    const selection: IObjectWithKey[] = this._selection.getSelection();
+
+    this.setState({
+      selectedItems: this._selection.getSelection() as IUser[]
+    })
+  }
 
 
+
+
+  public render(): React.ReactElement<IMsGraphCallsProps> {
 
 
     return (
       <div className={styles.msGraphCalls}>
         <button type="button" onClick={this.getUsersFromO365.bind(this)}>Get Users From O365</button>
 
+        {this.state.items == null ? null :
+          <DetailsList
+            items={this.state.items}
+            //compact={isCompactMode}
+            columns={this.state.columns}
+            //selectionMode={isModalSelection ? SelectionMode.multiple : SelectionMode.none}
+            setKey="set"
+            layoutMode={DetailsListLayoutMode.justified}
+            isHeaderVisible={true}
+            selection={this._selection}
+            selectionPreservedOnEmptyClick={true}
+            //onItemInvoked={this._onItemInvoked}
+            enterModalSelectionOnTouch={true}
+            ariaLabelForSelectionColumn="Toggle selection"
+            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+          />
 
 
 
-        <DetailsList
-          items={this.state.items}
-          //compact={isCompactMode}
-          columns={columns}
-          //selectionMode={isModalSelection ? SelectionMode.multiple : SelectionMode.none}
-          setKey="set"
-          layoutMode={DetailsListLayoutMode.justified}
-          isHeaderVisible={true}
-          //selection={this._selection}
-          selectionPreservedOnEmptyClick={true}
-          //onItemInvoked={this._onItemInvoked}
-          enterModalSelectionOnTouch={true}
-          ariaLabelForSelectionColumn="Toggle selection"
-          ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-        />
+
+
+        }
 
 
 
@@ -88,19 +110,13 @@ export default class MsGraphCalls extends React.Component<IMsGraphCallsProps, {}
     const allUsers: IUsersResponse = await msGraphClient
       .api('/users')
       .get((error, response: any, rawResponse?: any) => {
-        debugger;
+        //debugger;
         this.setState({
           items: response.value
         })
         // handle the response
       });
 
-    const dusan: IUser = await msGraphClient
-      .api('/users/b3cdc539-a8d1-47ab-a010-2ddb5aafaec3')
-      .get((error, response: any, rawResponse?: any) => {
-        debugger;
-        // handle the response
-      });
 
 
   }
@@ -109,18 +125,10 @@ export default class MsGraphCalls extends React.Component<IMsGraphCallsProps, {}
     //debugger;
     const msGraphClient: MSGraphClient = await this.props.spfxContext.msGraphClientFactory.getClient();
 
-
-    const allUsers: IUsersResponse = await msGraphClient
-      .api('/users')
-      .get((error, response: any, rawResponse?: any) => {
-        debugger;
-        // handle the response
-      });
-
     const dusan: IUser = await msGraphClient
       .api('/users/b3cdc539-a8d1-47ab-a010-2ddb5aafaec3')
       .get((error, response: any, rawResponse?: any) => {
-        debugger;
+        //debugger;
         // handle the response
       });
 
